@@ -1,245 +1,430 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>應收帳款</title>
-<style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang TC",sans-serif;color:#111827;background:#f5f6f8}
-*{box-sizing:border-box}body{margin:0;background:#f5f6f8}
-.app{max-width:620px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(90px + env(safe-area-inset-bottom))}
-header{padding:22px 4px 14px}
-h1{font-size:28px;margin:0;font-weight:750}
-.month{font-size:16px;color:#6b7280;margin-top:4px}
-.filter{display:flex;gap:8px;margin-bottom:14px}
-.filter select{font:inherit;padding:10px 12px;border:1px solid #ddd;border-radius:11px;background:#fff}
-.summary{background:#111827;color:#fff;border-radius:20px;padding:18px 20px;margin-bottom:16px;box-shadow:0 8px 24px #00000018}
-.summary .label{font-size:14px;color:#d1d5db}.total{font-size:34px;font-weight:750;margin-top:4px}
-.list{display:flex;flex-direction:column;gap:10px}
-.row{background:#fff;border-radius:16px;padding:15px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px #0000000b}
-.row input[type=checkbox]{width:24px;height:24px;accent-color:#111827;flex:none}
-.info{min-width:0;flex:1}.date{font-size:15px;color:#6b7280}.amount{font-size:20px;font-weight:700;margin-top:2px}
-.paid .amount,.paid .date{text-decoration:line-through;color:#9ca3af}
-.actions{display:flex;gap:6px}.icon{border:0;background:#f3f4f6;border-radius:10px;width:38px;height:38px;font-size:17px}
-.empty{text-align:center;color:#9ca3af;padding:60px 20px}
-.fab{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));border:0;background:#111827;color:#fff;border-radius:999px;padding:15px 20px;font-size:17px;font-weight:700;box-shadow:0 8px 22px #0000002b}
-dialog{border:0;border-radius:22px;width:min(92%,440px);padding:0;box-shadow:0 20px 60px #00000035}
-dialog::backdrop{background:#0006}.form{padding:22px}.form h2{margin:0 0 18px}
-.field{margin:12px 0}.field label{display:block;font-size:14px;color:#6b7280;margin-bottom:6px}
-input[type=date],input[type=number]{width:100%;font:inherit;padding:13px;border:1px solid #d1d5db;border-radius:12px;background:#fff}
-.buttons{display:flex;gap:10px;margin-top:18px}.btn{flex:1;padding:13px;border:0;border-radius:12px;font:inherit;font-weight:700}
-.cancel{background:#f3f4f6}.save{background:#111827;color:#fff}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f6fa">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="應收帳款">
+  <title>應收帳款總覽</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      color: #18273b;
+      background: #f4f6fa;
+      --navy: #192b45;
+      --muted: #54647b;
+      --border: #dfe5ef;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 3px solid #326bb5; outline-offset: 3px; }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding-top: calc(24px + env(safe-area-inset-top));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: calc(104px + env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+    }
+
+    h1 { margin: 0 0 16px; font-size: 28px; line-height: 1.25; }
+
+    .summary {
+      margin-bottom: 24px;
+      padding: 20px;
+      color: #fff;
+      background: var(--navy);
+      border-radius: 18px;
+    }
+
+    .summary h2 { margin: 0 0 8px; color: #e0e8f3; font-size: 15px; font-weight: 600; }
+    .summary strong, .amount, .subtotal { font-variant-numeric: tabular-nums; }
+    .summary strong {
+      display: block;
+      font-size: clamp(30px, 8vw, 44px);
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .month { margin-bottom: 24px; }
+    .month:last-child { margin-bottom: 0; }
+    .month-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 4px 12px;
+      margin: 0 2px 8px;
+    }
+    .month-heading h2 { margin: 0; font-size: 18px; }
+    .subtotal { margin: 0; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+
+    .items { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      padding: 6px 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .paid-toggle {
+      display: grid;
+      place-items: center;
+      flex: 0 0 44px;
+      min-height: 48px;
+      align-content: center;
+      gap: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .paid-toggle input { width: 20px; height: 20px; margin: 0; accent-color: var(--navy); }
+    .detail { flex: 1; min-width: 0; padding: 4px; }
+    time { display: block; color: var(--muted); font-size: 13px; }
+    .amount { display: block; margin-top: 2px; font-size: 20px; overflow-wrap: anywhere; }
+    .paid .amount { color: var(--muted); text-decoration: line-through; }
+
+    .row-button {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 4px;
+      color: #32455f;
+      background: #f0f3f8;
+      border: 0;
+      border-radius: 9px;
+      font-size: 13px;
+    }
+    .row-button:last-child { color: #8c3434; }
+
+    .empty {
+      margin: 0;
+      padding: 28px 12px;
+      color: var(--muted);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .add, .primary {
+      color: #fff;
+      background: var(--navy);
+      border: 0;
+      font-weight: 700;
+    }
+    .add {
+      position: fixed;
+      right: max(16px, env(safe-area-inset-right), calc((100vw - 608px) / 2));
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      min-height: 48px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      box-shadow: 0 5px 16px #192b4533;
+    }
+    .add:disabled { opacity: .55; cursor: default; }
+
+    dialog {
+      width: min(calc(100% - 32px), 420px);
+      max-height: calc(100% - 32px);
+      padding: 20px;
+      color: inherit;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 48px #192b4540;
+    }
+    dialog::backdrop { background: #16223880; }
+    dialog h2 { margin: 0 0 16px; font-size: 21px; }
+    .field { display: grid; gap: 6px; margin-bottom: 14px; }
+    .field label { color: #32455f; font-size: 14px; font-weight: 600; }
+    .field input {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      padding: 8px 10px;
+      color: inherit;
+      background: #fff;
+      border: 1px solid #a8b4c6;
+      border-radius: 9px;
+      font-size: 16px;
+    }
+    .buttons { display: flex; gap: 8px; margin-top: 18px; }
+    .buttons button { flex: 1; min-height: 44px; padding: 8px; border: 0; border-radius: 9px; }
+    .secondary { color: inherit; background: #edf1f7; }
+    .error { margin: 8px 0 16px; color: #8c3434; font-size: 14px; }
+  </style>
 </head>
 <body>
-<div class="app">
-<header>
-<h1>應收帳款</h1>
-<div class="month" id="period"></div>
-</header>
+  <main>
+    <h1>應收帳款總覽</h1>
+    <section class="summary" aria-labelledby="summaryTitle">
+      <h2 id="summaryTitle">所有月份未收款合計</h2>
+      <strong id="grandTotal" aria-live="polite">$0</strong>
+    </section>
+    <p id="storageError" class="error" role="alert" hidden></p>
+    <div id="groups"></div>
+    <button type="button" class="add" id="add">＋ 新增帳款</button>
+  </main>
 
-<div class="filter">
-<select id="yearFilter"></select>
-<select id="monthFilter"></select>
-</div>
+  <dialog id="dialog" aria-labelledby="formTitle">
+    <form id="form">
+      <h2 id="formTitle">新增帳款</h2>
+      <div class="field">
+        <label for="date">應收日期（2026～2099）</label>
+        <input id="date" type="date" min="2026-01-01" max="2099-12-31" required>
+      </div>
+      <div class="field">
+        <label for="amount">應收金額</label>
+        <input id="amount" type="number" inputmode="numeric" min="0" step="1" required>
+      </div>
+      <p id="formError" class="error" role="alert" hidden></p>
+      <div class="buttons">
+        <button type="button" class="secondary" id="cancel">取消</button>
+        <button type="submit" class="primary">儲存</button>
+      </div>
+    </form>
+  </dialog>
 
-<section class="summary">
-<div class="label">未收款合計</div>
-<div class="total" id="total">$0</div>
-</section>
+  <script>
+    'use strict';
 
-<div class="list" id="list"></div>
-<button class="fab" id="addBtn">＋ 新增帳款</button>
-</div>
+    const storageKey = 'receivables_v2';
+    const legacyKey = 'receivables_v1';
+    const firstDate = '2026-01-01';
+    const lastDate = '2099-12-31';
+    const numberFormat = new Intl.NumberFormat('zh-TW');
+    const get = id => document.getElementById(id);
+    const formatMoney = value => '$' + numberFormat.format(value);
+    const dialog = get('dialog');
+    const dateField = get('date');
+    const amountField = get('amount');
+    let records = [];
+    let editing = null;
+    let canSave = true;
 
-<dialog id="dlg">
-<form class="form" method="dialog" id="form">
-<h2 id="formTitle">新增帳款</h2>
-<div class="field">
-<label>應收日期</label>
-<input id="date" type="date" required>
-</div>
-<div class="field">
-<label>金額</label>
-<input id="amount" type="number" min="0" step="1" inputmode="numeric" placeholder="例如 30000" required>
-</div>
-<div class="buttons">
-<button type="button" class="btn cancel" id="cancel">取消</button>
-<button class="btn save">儲存</button>
-</div>
-</form>
-</dialog>
-
-<script>
-const KEY = "receivables_v2";
-let data = JSON.parse(localStorage.getItem(KEY) || "[]");
-let editing = null;
-
-const $ = id => document.getElementById(id);
-
-function money(n) {
-    return "$" + Number(n || 0).toLocaleString("zh-TW");
-}
-
-/* 年份固定為 2026～2099 */
-function initFilters() {
-    const now = new Date();
-    const startYear = 2026;
-    const endYear = 2099;
-
-    $("yearFilter").innerHTML = "";
-
-    for (let y = startYear; y <= endYear; y++) {
-        const option = document.createElement("option");
-        option.value = String(y);
-        option.textContent = y + "年";
-        $("yearFilter").appendChild(option);
+    function showError(element, message) {
+      element.textContent = message;
+      element.hidden = !message;
     }
 
-    $("monthFilter").innerHTML = "";
-
-    for (let m = 1; m <= 12; m++) {
-        const option = document.createElement("option");
-        option.value = String(m).padStart(2, "0");
-        option.textContent = m + "月";
-        $("monthFilter").appendChild(option);
+    function loadRecords() {
+      try {
+        // A saved v2 array, including an empty one, always takes precedence.
+        const saved = localStorage.getItem(storageKey) ?? localStorage.getItem(legacyKey);
+        const parsed = saved === null ? [] : JSON.parse(saved);
+        if (!Array.isArray(parsed)) throw new Error('Expected an array of receipts');
+        records = parsed;
+        canSave = true;
+        showError(get('storageError'), '');
+      } catch {
+        canSave = false;
+        showError(get('storageError'), '無法讀取帳款。請確認 Safari 允許儲存網站資料，再重新整理。');
+      }
+      get('add').disabled = !canSave;
+      render();
     }
 
-    let currentYear = now.getFullYear();
+    function saveRecords(nextRecords) {
+      if (!canSave) return false;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextRecords));
+        records = nextRecords;
+        return true;
+      } catch {
+        const message = '無法儲存帳款。請確認 Safari 的網站資料設定或儲存空間後再試一次。';
+        if (dialog.open) showError(get('formError'), message);
+        else window.alert(message);
+        return false;
+      }
+    }
 
-    if (currentYear < startYear) currentYear = startYear;
-    if (currentYear > endYear) currentYear = endYear;
+    function validDate(value) {
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const date = new Date(value + 'T00:00:00Z');
+      return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+    }
 
-    $("yearFilter").value = String(currentYear);
-    $("monthFilter").value = String(now.getMonth() + 1).padStart(2, "0");
-}
+    function render() {
+      const view = records
+        .map((record, index) => ({ record, index, amount: Number(record?.amount) }))
+        .filter(({ record, amount }) => validDate(record?.date) && Number.isInteger(amount) && amount >= 0)
+        .sort((a, b) => a.record.date.localeCompare(b.record.date));
 
-function selectedYM() {
-    return $("yearFilter").value + "-" + $("monthFilter").value;
-}
+      const months = new Map();
+      let grandTotal = 0n;
+      for (const entry of view) {
+        const key = entry.record.date.slice(0, 7);
+        if (!months.has(key)) months.set(key, { entries: [], total: 0n });
+        const month = months.get(key);
+        month.entries.push(entry);
+        if (!entry.record.paid) {
+          const amount = BigInt(entry.amount);
+          month.total += amount;
+          grandTotal += amount;
+        }
+      }
 
-function render() {
-    const ym = selectedYM();
-
-    const rows = data
-        .filter(x => x.date.startsWith(ym))
-        .sort((a,b) => a.date.localeCompare(b.date));
-
-    $("period").textContent =
-        ym.slice(0,4) + "年" + Number(ym.slice(5)) + "月";
-
-    const unpaidTotal = rows
-        .filter(x => !x.paid)
-        .reduce((sum,x) => sum + Number(x.amount), 0);
-
-    $("total").textContent = money(unpaidTotal);
-
-    if (!rows.length) {
-        $("list").innerHTML =
-            '<div class="empty">本月尚無應收帳款<br>點下方「＋ 新增帳款」開始</div>';
+      const groups = get('groups');
+      get('grandTotal').textContent = formatMoney(grandTotal);
+      if (!months.size) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = canSave ? '目前沒有帳款。點「新增帳款」開始。' : '目前無法顯示帳款。';
+        groups.replaceChildren(empty);
         return;
+      }
+
+      const sections = document.createDocumentFragment();
+      for (const [key, month] of months) {
+        const section = document.createElement('section');
+        section.className = 'month';
+        const header = document.createElement('header');
+        header.className = 'month-heading';
+        const heading = document.createElement('h2');
+        heading.textContent = `${key.slice(0, 4)} 年 ${Number(key.slice(5))} 月`;
+        const subtotal = document.createElement('p');
+        subtotal.className = 'subtotal';
+        subtotal.textContent = '未收款小計 ' + formatMoney(month.total);
+        const list = document.createElement('ul');
+        list.className = 'items';
+        for (const entry of month.entries) list.append(renderItem(entry));
+        header.append(heading, subtotal);
+        section.append(header, list);
+        sections.append(section);
+      }
+      groups.replaceChildren(sections);
     }
 
-    $("list").innerHTML = rows.map(x => `
-        <div class="row ${x.paid ? "paid" : ""}">
-            <input type="checkbox"
-                ${x.paid ? "checked" : ""}
-                onchange="togglePaid('${x.id}')">
+    function renderItem({ record, index, amount }) {
+      const item = document.createElement('li');
+      item.className = record.paid ? 'item paid' : 'item';
 
-            <div class="info">
-                <div class="date">${x.date.slice(5).replace("-","/")}</div>
-                <div class="amount">${money(x.amount)}</div>
-            </div>
+      const toggle = document.createElement('label');
+      toggle.className = 'paid-toggle';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = `paid-${index}`;
+      checkbox.checked = Boolean(record.paid);
+      checkbox.disabled = !canSave;
+      checkbox.setAttribute('aria-label', `${record.date} ${formatMoney(amount)} 已收款`);
+      checkbox.addEventListener('change', () => {
+        const next = records.slice();
+        next[index] = { ...record, paid: checkbox.checked };
+        if (saveRecords(next)) {
+          const focused = document.activeElement === checkbox;
+          render();
+          if (focused) get(`paid-${index}`).focus({ preventScroll: true });
+        } else {
+          checkbox.checked = Boolean(record.paid);
+        }
+      });
+      const status = document.createElement('span');
+      status.textContent = record.paid ? '已收' : '未收';
+      toggle.append(checkbox, status);
 
-            <div class="actions">
-                <button class="icon" onclick="editItem('${x.id}')">✎</button>
-                <button class="icon" onclick="removeItem('${x.id}')">×</button>
-            </div>
-        </div>
-    `).join("");
-}
+      const detail = document.createElement('div');
+      detail.className = 'detail';
+      const date = document.createElement('time');
+      date.dateTime = record.date;
+      date.textContent = record.date;
+      const money = document.createElement('strong');
+      money.className = 'amount';
+      money.textContent = formatMoney(amount);
+      detail.append(date, money);
 
-function persist() {
-    localStorage.setItem(KEY, JSON.stringify(data));
-    render();
-}
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'row-button';
+      edit.textContent = '修改';
+      edit.disabled = !canSave;
+      edit.addEventListener('click', () => openForm(record));
 
-function togglePaid(id) {
-    const item = data.find(x => x.id === id);
-    if (!item) return;
-    item.paid = !item.paid;
-    persist();
-}
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'row-button';
+      remove.textContent = '刪除';
+      remove.disabled = !canSave;
+      remove.addEventListener('click', () => {
+        if (!window.confirm(`確定刪除 ${record.date} 的 ${formatMoney(amount)} 帳款？`)) return;
+        const next = records.slice();
+        next.splice(index, 1);
+        if (saveRecords(next)) render();
+      });
 
-function removeItem(id) {
-    if (!confirm("確定刪除此筆帳款？")) return;
-
-    data = data.filter(x => x.id !== id);
-    persist();
-}
-
-function editItem(id) {
-    const item = data.find(x => x.id === id);
-    if (!item) return;
-
-    editing = id;
-    $("formTitle").textContent = "修改帳款";
-    $("date").value = item.date;
-    $("amount").value = item.amount;
-    $("dlg").showModal();
-}
-
-$("addBtn").onclick = () => {
-    editing = null;
-    $("formTitle").textContent = "新增帳款";
-    $("date").value = selectedYM() + "-01";
-    $("amount").value = "";
-    $("dlg").showModal();
-};
-
-$("cancel").onclick = () => $("dlg").close();
-
-$("form").addEventListener("submit", e => {
-    e.preventDefault();
-
-    const date = $("date").value;
-    const amount = Number($("amount").value);
-
-    if (!date || amount < 0) return;
-
-    if (editing) {
-        const old = data.find(x => x.id === editing);
-
-        data = data.map(x =>
-            x.id === editing
-                ? {...x, date, amount}
-                : x
-        );
-    } else {
-        data.push({
-            id: crypto.randomUUID(),
-            date,
-            amount,
-            paid: false
-        });
+      item.append(toggle, detail, edit, remove);
+      return item;
     }
 
-    localStorage.setItem(KEY, JSON.stringify(data));
+    function openForm(record = null) {
+      editing = record;
+      get('formTitle').textContent = record ? '修改帳款' : '新增帳款';
+      showError(get('formError'), '');
+      const today = new Date();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayDate = `${today.getFullYear()}-${month}-${day}`;
+      const defaultDate = todayDate < firstDate ? firstDate : todayDate > lastDate ? lastDate : todayDate;
+      // Allow an existing date outside the current range to stay as it is.
+      dateField.min = record?.date < firstDate ? record.date : firstDate;
+      dateField.max = record?.date > lastDate ? record.date : lastDate;
+      dateField.value = record?.date ?? defaultDate;
+      amountField.value = record?.amount ?? '';
+      dialog.showModal();
+    }
 
-    $("yearFilter").value = date.slice(0,4);
-    $("monthFilter").value = date.slice(5,7);
+    get('add').addEventListener('click', () => openForm());
+    get('cancel').addEventListener('click', () => dialog.close());
 
-    render();
-    $("dlg").close();
-});
+    get('form').addEventListener('submit', event => {
+      event.preventDefault();
+      const date = dateField.value;
+      const amount = Number(amountField.value);
+      const inRange = date >= firstDate && date <= lastDate;
+      if (!validDate(date) || (!inRange && date !== editing?.date)) {
+        showError(get('formError'), '請輸入 2026～2099 年的有效日期。');
+        dateField.focus();
+        return;
+      }
+      if (amountField.value === '' || !Number.isSafeInteger(amount) || amount < 0) {
+        showError(get('formError'), '請輸入有效的非負整數金額。');
+        amountField.focus();
+        return;
+      }
 
-$("yearFilter").onchange = render;
-$("monthFilter").onchange = render;
+      const next = records.slice();
+      if (editing) {
+        const index = records.indexOf(editing);
+        if (index === -1) {
+          showError(get('formError'), '帳款資料已更新。請關閉表單後重新開啟。');
+          return;
+        }
+        next[index] = { ...editing, date, amount };
+      } else {
+        const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        next.push({ id, date, amount, paid: false });
+      }
+      if (saveRecords(next)) {
+        dialog.close();
+        render();
+      }
+    });
 
-initFilters();
-render();
-</script>
+    window.addEventListener('storage', event => {
+      if (event.key === storageKey || event.key === legacyKey || event.key === null) loadRecords();
+    });
+
+    loadRecords();
+  </script>
 </body>
 </html>
